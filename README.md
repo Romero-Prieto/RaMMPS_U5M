@@ -2,7 +2,7 @@ This is a code repository for the manuscript “Estimates of under-five mortalit
 
 The MATLAB file RaMMPS_U5M.m produces all figures and tables included in the manuscript, using some input data files: RaMMPS.csv, RaMMPSdst.csv, RaMMPSHH.csv, MICSmalawi.csv, DHSmalawi.csv, DHSmalawidst.csv, IGMEmalawi.csv, and RaMMPScalls.csv. These data files are not part of this repository but can be consolidated after running the Stata do-files RaMMPS_processing.do and IGME2024.do (also within this repository).
 
-This routines require the following raw data files, available from these repositories:
+These routines require the following raw data files, available from these repositories:
 
 MW_AnalyticSample.dta and MW_AllCallAttempts.dta from DataFirst, the RaMMPS project data repository, available at: https://doi.org/10.25828/M86Z-NF08
 
