@@ -2,11 +2,11 @@ function [qS,qP,XB] = RaMMPS_Bayes(N,warmUp)
 
 if N > 0
     pATh       = "/Users/lshjr3/Documents/RaMMPS/under-five mortality/";
-    load(char(pATh + "Results/RaMMPS.mat"),'RaMMPS');
+    load(char(pATh + "Results/RaMMPS.mat"),'RaMMPS','RESolUTioN');
 
     x{1}       = [(0:7:28)/365.25,[(2:1:12),(15:3:24),(36:12:60)]/12]';
     x{2}       = [string(0);string([(7:7:28)';(2:1:11)';(12:3:24)';(36:12:60)']) + char([kron('d',ones(4,1));kron('m',ones(18,1))])];
-    n          = x{1}(2:end) - x{1}(1:end - 1);
+    n          = diff(x{1},1);
     list       = {'TPH','FPH'};
     date       = max(RaMMPS.interview);
     Ts         = {datetime([2014 year(date)]',[1 month(date)]',[1 day(date)]'),datetime([2014 2016]',1,1),datetime([2016 2018]',1,1),datetime([2018 2020]',1,1),datetime([2020 2022]',1,1),datetime([2022 year(date)]',[1 month(date)]',[1 day(date)]')};
@@ -209,8 +209,8 @@ XB{4,1}       = "$\textrm{Central = 1}$";
 XB{5,1}       = "$\textrm{South = 1}$";
 XB{6,1}       = "$\textrm{Mother's Age: less than 30 = 1; 30 or more = -1}$";
 XB{7,1}       = "$\textrm{Mother's Education: incomplete primary = 1}$";
-XB{8,1}       = "$\textrm{incomplete secondary}$";
-XB{9,1}       = "$\textrm{complete secondary or more}$";
+XB{8,1}       = "$\textrm{incomplete secondary = 1}$";
+XB{9,1}       = "$\textrm{complete secondary or more = 1}$";
 
 lABs{1}{1}    = 1;
 lABs{2}{1}    = 2;
@@ -224,7 +224,7 @@ lABs{5}{3}    = 9;
 for i = 1:numel(Tx)
     date          = year(Tx{i}) + (day(Tx{i},'dayofyear') - 1)./days(datetime(year(Tx{i}) + 1,1,1) - datetime(year(Tx{i}),1,1));
     date          = string(sprintf('%0.1f',date(1))) + "-" + string(sprintf('%0.1f',date(2)));    
-    XB{end + 1,1} = "$\mathrm{period}$ $\mathrm{[}\mathit{" + date + "}\mathrm{)}$";
+    XB{end + 1,1} = "$\textrm{period [\it{" + date + "}\rm{)}}$";
     lABs{6}{i}    = max(cell2mat(lABs{5})) + i;
     clear date
 end
@@ -235,36 +235,45 @@ vARs          = {vARs(1:2) vARs(1:2)};
 foRMaT        = {'%0.4f','%0.4f','%0.4f'};
 nOTe          = {'$\textrm{ln}[\lambda_{j}(x)] = \textrm{ln}[m(x)] + \sum_{}^{}\mathop{}_{\mkern-5mu k} z^{k}_{j}\cdot\beta_{k}$ + $\sum_{}^{}\mathop{}_{\mkern-5mu p} y^{p}_{j}\cdot\gamma_{p} + t_{j}(x)$','$\textrm{Poisson-(Bayesian) MCMC Hamiltonian estimation.}$ $\mathrm{p50}$/$\mathit{[p2.5,p97.5]}$ $\textrm{posterior distribution.}$'};
 tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,XB,cell2mat(bOx),0.230,0.080,[]);
-saveas(gcf,char(pATh + "Results/RaMMPS-U5M Poisson.png"));
+exportgraphics(gcf,char(pATh + "Results/Table_A1.png"),'Resolution',RESolUTioN);
+
 
 nOTe          = {'$\textrm{ln}[\lambda_{j}(x)] = \textrm{ln}[m(x)] + \sum_{}^{}\mathop{}_{\mkern-5mu k} z^{k}_{j}\cdot\beta_{k}$ + $\sum_{}^{}\mathop{}_{\mkern-5mu p} y^{p}_{j}\cdot\gamma_{p} + t_{j}(x)$','$\textrm{Maximum Likelihood estimation (conjugate gradient methods). 95\% CIs, assuming a normal distribution of the coefficients.}$'};
 tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,XB,cell2mat(MLE),0.230,0.080,[]);
-saveas(gcf,char(pATh + "Results/RaMMPS-U5M Poisson MLE.png"));
+exportgraphics(gcf,char(pATh + "Results/Table_A3.png"),'Resolution',RESolUTioN);
+
+
 
 
 LAB                      = XB(nX);
+for i = 1:numel(LAB)
+    temp   = char(LAB{i});
+    A      = find(ismember(temp,'{}'));
+    LAB{i} = temp(A(1) + 1:A(end) - 1);
+end
 coloR                    = {[0.00 0.00 0.75],[0.95 0.00 0.95],[0.85 0.35 0.01],[0.45 0.65 0.20],[0.65 0.10 0.20],[0.00 0.55 0.65],[0.00 0.00 0.75],[0.95 0.00 0.95],[0.85 0.35 0.01],[0.45 0.65 0.20],[0.65 0.10 0.20],[0.00 0.55 0.65]};
+
+mPIX                     = 538756;
 pix                      = 1/37.7952755906;
-fi                       = figure('Color',[1 1 1]);
-fi.Position              = [0 0 28 21]/pix;
+z                        = min(sqrt(mPIX/((10*4)*(10*3)/pix^2)),1);
+fi                       = figure('Color',[1 1 1],'Position',z*10*[0 0 4 3]/pix,'Theme','light');
 axes1                    = axes('Parent',fi,'Position',[0.025 0.025 0.975 0.975]);
 hold(axes1,'on');
 TL                       = tiledlayout(3,4,'Padding','compact','TileSpacing','compact');
 for i = 1:size(sample{1},2)
     nexttile(i)
     ax{i}                       = gca;
-    ax{i}.FontName              = 'Times New Roman';
-    ax{i}.FontSize              = 10;
+    ax{i}.FontSize              = 10*z;
     ax{i}.XAxis.TickLabelFormat = '%.2f';
     ax{i}.YAxis.TickLabelFormat = '%.2f';
     
     if i >= 9
-        xlabel('$\textit{estimated coefficient}$','Interpreter','latex','FontName','Times New Roman','FontSize',11);
+        xlabel('$\textbf{Estimated coefficient}$','Interpreter','latex','FontSize',11*z);
     end
     if isequal(mod(i,4),1)
-        ylabel('$\textit{probability density function}$','Interpreter','latex','FontName','Times New Roman','FontSize',11);
+        ylabel('$\textbf{Probability density function}$','Interpreter','latex','FontSize',11*z);
     end
-    title(char(string(char(96 + i)) + ". " + string(LAB{i})),'Interpreter','latex');
+    title(char(string("$\textbf{" + char(96 + i)) + ". " + LAB{i}) + "}$",'Interpreter','latex');
     grid on;
     box on;
     hold on;
@@ -273,22 +282,49 @@ end
 for j = 1:numel(sample)
     for i = 1:size(sample{1},2)
         nexttile(i)
-        H{i}   = histogram(sample{j}(:,i),25,'Normalization','pdf','FaceColor',coloR{i},'EdgeColor',[0 0 0],'FaceAlpha',0.1,'EdgeAlpha',0.25);
-        [f,xi] = ksdensity(sample{j}(:,i));
-        P{i}   = plot(xi,f,'LineWidth',1.0,'Color',coloR{i});        
-        z      = prctile(sample{j}(:,i),[0.1 99.9]);
-        xlim([z(1) z(2)])
+        ax{i}.XTickMode  = 'auto';
+        ax{i}.YTickMode  = 'auto';
+        ax{i}.XLabelMode = 'auto';
+        ax{i}.YLabelMode = 'auto';
+
+        H{i}             = histogram(sample{j}(:,i),25,'Normalization','pdf','FaceColor',coloR{i},'EdgeColor',[0 0 0],'FaceAlpha',0.1,'EdgeAlpha',0.25);
+        [f,xi]           = ksdensity(sample{j}(:,i));
+        P{i}             = plot(xi,f,'LineWidth',1.25*z,'Color',coloR{i});        
+        w                = prctile(sample{j}(:,i),[0.1 99.9]);
+        xlim([w(1) w(2)])
         ylim([0 max(f)*1.15])
         
-        y      = prctile(sample{j}(:,i),[50 2.5 97.5]);
-        [f,y]  = ksdensity(sample{j}(:,i),y);
+        y                = prctile(sample{j}(:,i),[50 2.5 97.5]);
+        [f,y]            = ksdensity(sample{j}(:,i),y);
         for k = 1:numel(y)
-             G{i,k} = plot(y([k k]),[0 f(k)],'LineWidth',0.50,'Color',coloR{i},'LineStyle','-');
+             G{i,k} = plot(y([k k]),[0 f(k)],'LineWidth',1.00*z,'Color',coloR{i},'LineStyle','-.');
         end
-        G{i,end + 1} = plot([0 0],[0 max(f)*1.50],'LineWidth',1.00,'Color','k','LineStyle','-');
+        G{i,end + 1}     = plot([0 0],[0 max(f)*1.50],'LineWidth',1.15*z,'Color','k','LineStyle','-');
+
+        t                = ax{i}.XAxis.TickValues;
+        for k = 1:numel(t)
+            Tk{k} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(k))) + "}$");
+        end
+        ax{i}.XTickLabelRotation         = 0;
+        ax{i}.XAxis.TickLabels           = Tk;
+        ax{i}.XAxis.TickLabelInterpreter = 'latex';
+        clear t Tk
+
+        t                = ax{i}.YAxis.TickValues;
+        for k = 1:numel(t)
+            Tk{k} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(k))) + "}$");
+        end
+        ax{i}.YTickLabelRotation         = 0;
+        ax{i}.YAxis.TickLabels           = Tk;
+        ax{i}.YAxis.TickLabelInterpreter = 'latex';
+        clear t Tk
+        ax{i}.XTickMode  = 'manual';
+        ax{i}.YTickMode  = 'manual';
+        ax{i}.XLabelMode = 'manual';
+        ax{i}.YLabelMode = 'manual';
     end
-    
-    saveas(gcf,char(pATh + "Results/RaMMPS-U5M Coeff-" + list{ceil(j/2)} + "-" + models{numel(models) - mod(j,2)} + ".png"))
+
+    saveas(gcf,char(pATh + "Results/Coeff-" + list{ceil(j/2)} + "-" + models{numel(models) - mod(j,2)} + ".png"))
     for i = 1:size(sample{1},2)
         delete(H{i});
         delete(P{i});
@@ -300,40 +336,68 @@ for j = 1:numel(sample)
 end
 
 
-
-
 CO = [6 3];
 for j = 1:2:numel(sample)
     for i = 1:size(sample{1},2)
         nexttile(i)
+        ax{i}.XTickMode  = 'auto';
+        ax{i}.YTickMode  = 'auto';
+        ax{i}.XLabelMode = 'auto';
+        ax{i}.YLabelMode = 'auto';
+
         for h = 0:1
             H{1 + h}{i} = histogram(sample{j + h}(:,i),25,'Normalization','pdf','FaceColor',coloR{CO(1 + h)},'EdgeColor',[0 0 0],'FaceAlpha',0.1,'EdgeAlpha',0.25); 
         end
         
         for h = 0:1
             [f,xi]      = ksdensity(sample{j + h}(:,i));
-            P{1 + h}{i} = plot(xi,f,'LineWidth',1.0,'Color',coloR{CO(1 + h)});
+            P{1 + h}{i} = plot(xi,f,'LineWidth',1.25*z,'Color',coloR{CO(1 + h)});
             
-            z(1 + h,:)  = prctile(sample{j + h}(:,i),[0.1 99.9]);
-            xlim([min(z(:,1)) max(z(:,2))])
+            w(1 + h,:)  = prctile(sample{j + h}(:,i),[0.1 99.9]);
+            xlim([min(w(:,1)) max(w(:,2))])
             fw(1 + h)   = max(f)*1.15;          
             ylim([0 max(fw)])
             
             y           = prctile(sample{j + h}(:,i),[50 2.5 97.5]);
             [f,y]       = ksdensity(sample{j + h}(:,i),y);
             for k = 1:numel(y)
-                G{1 + h}{i,k} = plot(y([k k]),[0 f(k)],'LineWidth',0.50,'Color',coloR{CO(1 + h)},'LineStyle','-');
+                G{1 + h}{i,k} = plot(y([k k]),[0 f(k)],'LineWidth',0.75*z,'Color',coloR{CO(1 + h)},'LineStyle','-');
             end
             if isequal(h,1)
-                G{1}{i,4} = plot([0 0],[0 max(fw)*1.50],'LineWidth',1.00,'Color','k','LineStyle','-');
+                G{1}{i,4} = plot([0 0],[0 max(fw)*1.50],'LineWidth',1.25*z,'Color','k','LineStyle','-');
             end
         end
         if isequal(i,9)
-            legend(models,'Interpreter','latex','FontName','Times New Roman','FontSize',9,'FontAngle','oblique','Location','southoutside','NumColumns',3,'Box','off');
+            for k = 1:numel(models)
+                leGend{k} = char("$\textbf{" + models{k} + "}$");
+            end
+            legend(leGend,'Interpreter','latex','FontSize',9*z,'FontAngle','oblique','Location','southoutside','NumColumns',2,'Box','off');
         end
+
+        t                = ax{i}.XAxis.TickValues;
+        for k = 1:numel(t)
+            Tk{k} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(k))) + "}$");
+        end
+        ax{i}.XTickLabelRotation         = 0;
+        ax{i}.XAxis.TickLabels           = Tk;
+        ax{i}.XAxis.TickLabelInterpreter = 'latex';
+        clear t Tk
+
+        t                = ax{i}.YAxis.TickValues;
+        for k = 1:numel(t)
+            Tk{k} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(k))) + "}$");
+        end
+        ax{i}.YTickLabelRotation         = 0;
+        ax{i}.YAxis.TickLabels           = Tk;
+        ax{i}.YAxis.TickLabelInterpreter = 'latex';
+        clear t Tk
+        ax{i}.XTickMode  = 'manual';
+        ax{i}.YTickMode  = 'manual';
+        ax{i}.XLabelMode = 'manual';
+        ax{i}.YLabelMode = 'manual';
     end
     
-    saveas(gcf,char(pATh + "Results/RaMMPS-U5M Coeff-" + list{ceil(j/2)} + ".png"))
+    saveas(gcf,char(pATh + "Results/Figure_A" + ((j + 1)/2 + 3) + ".png"))
     for i = 1:size(sample{1},2)
         for h = 0:1
             delete(H{1 + h}{i});
