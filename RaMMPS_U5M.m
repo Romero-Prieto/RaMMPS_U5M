@@ -35,17 +35,17 @@ date                  = max(RaMMPS.interview);
 Ts                    = {datetime([2014 year(date)]',[1 month(date)]',[1 day(date)]'),datetime([2014 2016]',1,1),datetime([2016 2018]',1,1),datetime([2018 2020]',1,1),datetime([2020 2022]',1,1),datetime([2022 year(date)]',[1 month(date)]',[1 day(date)]')};
 sET                   = [RaMMPS.WR(RaMMPS.k == 1),ones(sum(RaMMPS.k == 1),1)];
 models                = {'post-strat.','selected'};
-R                     = 50;
+R                     = 1000;
 aGEs                  = [5 16 23];
 
 
-bLOKs                 = {'SBH','TPH','FPH'};
+bLOcKs                 = {'SBH','TPH','FPH'};
 data                  = RaMMPS(RaMMPS.k == 1,{'sample','caseid','K'});
 for i = 1:numel(models)
     rng(0);
     S          = [ones(size(data,1),1),rand(size(data,1),R)];
-    for j = 1:numel(bLOKs)
-        sEL             = find(data.sample == bLOKs{j});
+    for j = 1:numel(bLOcKs)
+        sEL             = find(data.sample == bLOcKs{j});
         W               = sET(sEL,i);
         W               = [0;cumsum(W(1:end - 1))]/sum(W);
         for r = 2:R + 1
@@ -341,66 +341,81 @@ B                     = eXAcTTime(DHSmalawi.Birth);
 B                     = B*ones(1,R + 1);
 D                     = B + d;
 O                     = min(D,Tdhs(2));
-
 p                     = rand(size(DHSmalawi,1),R + 1);
 dob                   = p.*eXAcTTime(DHSmalawi.DOB) + (1 - p).*eXAcTTime(datetime(year(DHSmalawi.DOB),month(DHSmalawi.DOB) + 1,day(DHSmalawi.DOB)));
 ageS                  = dATe{2}(2) - dob;
 ageB                  = B - dob;
 
+bLOcKs                = 5;
+bLOcKs                = sum((1:R + 1)' >= 1:floor(R/bLOcKs):(R - 1),2);
 for i = 1:numel(dATaDHS)
     h                    = i + numel(dATa) + numel(dATaB);
     s                    = dATaDHS{i}{1};
-    w                    = dATaDHS{i}{2};
-    for k = 1:3
-        if k == 1
-            sEX           = ones(size(DHSmalawi,1),1);
-        else
-            sEX           = (DHSmalawi.sex == sex(k - 1));
+    for g = 1:bLOcKs(end)
+        G                    = (bLOcKs == g);
+        w                    = dATaDHS{i}{2}(s,G);
+        for k = 1:3
+            if isequal(k,1)
+                sH{k}            = (ones(size(DHSmalawi.sex(s))) == 1);
+            else
+                sH{k}            = (DHSmalawi.sex(s) == sex(k - 1));
+            end
         end
-        sH                   = dATaDHS{i}{1} & sEX;
-        
+    
         for j = 1:numel(x{1}) - 1
-            a             = max(min(B(sH,:) + x{1}(j),min(O(sH,:),Tdhs(2))),Tdhs(1));
-            o             = max(min(B(sH,:) + x{1}(j + 1),min(O(sH,:),Tdhs(2))),Tdhs(1));
-            exposure(j,:) = sum((o - a).*w(sH,:));
-            events(j,:)   = sum((d(sH,:) >= x{1}(j) & d(sH,:) < x{1}(j + 1) & D(sH,:) >= Tdhs(1) & D(sH,:) < Tdhs(2)).*w(sH,:));
-            clear a o
+            a                 = max(min(B(s,G) + x{1}(j),min(O(s,G),Tdhs(2))),Tdhs(1));
+            o                 = max(min(B(s,G) + x{1}(j + 1),min(O(s,G),Tdhs(2))),Tdhs(1));
+            eX                = (sparse(o - a).*w);
+            eV                = sparse((d(s,G) >= x{1}(j) & d(s,G) < x{1}(j + 1) & D(s,G) >= Tdhs(1) & D(s,G) < Tdhs(2)).*w);
+            for k = 1:3
+                exposure{k}(j,:) = full(sum(eX(sH{k},:)));
+                events{k}(j,:)   = full(sum(eV(sH{k},:)));
+            end
+            clear a o eX eV
             clc;
-            [21 j/(numel(x{1}) - 1)]
+            [i 21 j/(numel(x{1}) - 1)]
         end
-
-        births               = sum(DHSmalawi.births(s).*w(s,:));
-        stillbirths          = sum(DHSmalawi.stillbirths(s).*w(s,:));
-        stillbirths          = stillbirths./(stillbirths + births);
-        SRB                  = ((DHSmalawi.sex(s) == 1 & B(s,:) >= Tdhs(1) & B(s,:) < Tdhs(2))'*w(s,:))./((DHSmalawi.sex(s) == 2 & B(s,:) >= Tdhs(1) & B(s,:) < Tdhs(2))'*w(s,:));
-        m                    = events./exposure;
-        q                    = 1 - [ones(1,R + 1);exp(-cumsum(m.*n))];
-
-        TaBle.q{k,h}         = q;    
-        TaBle.s{k,h}         = 1 - (1 - q([1 2 5],:)).*(1 - stillbirths);
-        TaBle.SNR{k,h}       = [TaBle.s{k,h}(1,:);TaBle.q{k,h}(2,:);TaBle.q{k,h}(5,:);TaBle.s{k,h}(1,:)./TaBle.q{k,h}(5,:)/1000;TaBle.q{k,h}(2,:)./TaBle.q{k,h}(5,:)/1000];
-        TaBle.SRB{k,h}       = SRB;
-        TaBle.tAU{k,h}       = dATe{1}';
-        clear sEX events exposure births stillbirths m q SRB
-    end
+        for k = 1:3
+            m                 = events{k}./exposure{k};
+            q                 = 1 - [ones(1,sum(G));exp(-cumsum(m.*n))];
+            TaBle.q{k,h}(:,G) = q;
+            if isequal(g,1)
+                TaBle.tAU{k,h} = dATe{1}';
+            end
+            clear m q
+        end
+        clear events exposure sH
     
-    A                    = [max(min(DHSmalawi.age(dATaDHS{i}{1})),15),min(max(DHSmalawi.age(dATaDHS{i}{1})),49)];
-    TFR                  = 0;
-    for j = A(1):A(2)
-        a        = max(min(ageS(s,:) - 3,j + 1),j);
-        o        = max(min(ageS(s,:),j + 1),j);
-        exposure = sum((DHSmalawi.k(s) == 1).*(o - a).*w(s,:));
-        events   = sum((dATe{2}(2) - B(s,:) <= 3 & dATe{2}(2) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
-        TFR      = TFR + events./exposure;
-        clc;
-        [22 (j - A(1) + 1)/(A(2) - A(1) + 1)]
-    end
+        births                  = sum(DHSmalawi.births(s).*w);
+        stillbirths             = sum(DHSmalawi.stillbirths(s).*w);
+        stillbirths             = stillbirths./(stillbirths + births);
+        SRB                     = full(sum(sparse(DHSmalawi.sex(s) == 1 & B(s,G) >= Tdhs(1) & B(s,G) < Tdhs(2)).*w))./full(sum(sparse(DHSmalawi.sex(s) == 2 & B(s,G) >= Tdhs(1) & B(s,G) < Tdhs(2)).*w));
     
-    TaBle.TFR{1,h}       = TFR;
-    TaBle.sRB{1,h}       = sum((DHSmalawi.sex(s) == 1).*w(s,:))./sum((DHSmalawi.sex(s) == 2).*w(s,:));
-    TaBle.parity{1,h}    = sum(~isnan(DHSmalawi.bidx(s)).*w(s,:))./sum((DHSmalawi.k(s) == 1).*w(s,:));
-    TaBle.childless{1,h} = sum((DHSmalawi.mother(s) ~= 1 & DHSmalawi.k(s) == 1).*w(s,:))./sum((DHSmalawi.k(s) == 1).*w(s,:))*100;
-    clear h j TFR w A
+        TaBle.s{1,h}(:,G)       = 1 - (1 - TaBle.q{1,h}([1 2 5],G)).*(1 - stillbirths);
+        TaBle.SNR{1,h}(:,G)     = [TaBle.s{1,h}(1,G);TaBle.q{1,h}(2,G);TaBle.q{1,h}(5,G);TaBle.s{1,h}(1,G)./TaBle.q{1,h}(5,G)/1000;TaBle.q{1,h}(2,G)./TaBle.q{1,h}(5,G)/1000];
+        TaBle.SRB{1,h}(G)       = SRB;
+        clear births stillbirths SRB
+        
+        A                    = [max(min(DHSmalawi.age(dATaDHS{i}{1})),15),min(max(DHSmalawi.age(dATaDHS{i}{1})),49)];
+        TFR                  = 0;
+        for j = A(1):A(2)
+            a                 = max(min(ageS(s,G) - 3,j + 1),j);
+            o                 = max(min(ageS(s,G),j + 1),j);
+            exposure          = sum(sparse(DHSmalawi.k(s) == 1).*sparse(o - a).*w);
+            events            = sum(sparse(dATe{2}(2) - B(s,G) <= 3 & dATe{2}(2) - B(s,G) > 0).*sparse(ageB(s,G) >= j & ageB(s,G) < j + 1).*w);
+            TFR               = TFR + events./exposure;
+            clc;
+            [i 22 (j - A(1) + 1)/(A(2) - A(1) + 1)]
+            clear a o exposure events
+        end
+        
+        TaBle.TFR{1,h}(G)       = TFR;
+        TaBle.sRB{1,h}(G)       = sum((DHSmalawi.sex(s) == 1).*w)./sum((DHSmalawi.sex(s) == 2).*w);
+        TaBle.parity{1,h}(G)    = sum(~isnan(DHSmalawi.bidx(s)).*w)./sum((DHSmalawi.k(s) == 1).*w);
+        TaBle.childless{1,h}(G) = sum((DHSmalawi.mother(s) ~= 1 & DHSmalawi.k(s) == 1).*w)./sum((DHSmalawi.k(s) == 1).*w)*100;
+        clear j k TFR w A
+    end
+    clear h s
 end
 
 for i = 1:numel(dATaDHS)
@@ -465,54 +480,67 @@ ageS                  = dATe{2}(2) - dob;
 ageB                  = B - dob;
 
 for i = 1:numel(dATaMICS)
-    h                    = i + numel(dATa) + numel(dATaB) + numel(dATaDHS);
-    s                    = dATaMICS{i}{1};
-    w                    = dATaMICS{i}{2};
-    for k = 1:3
-        if k == 1
-            sEX           = ones(size(MICSmalawi,1),1);
-        else
-            sEX           = (MICSmalawi.sex == sex(k - 1));
+    h = i + numel(dATa) + numel(dATaB) + numel(dATaDHS);
+    s = dATaMICS{i}{1};
+    for g = 1:bLOcKs(end)
+        G                    = (bLOcKs == g);
+        w                    = dATaMICS{i}{2}(s,G);
+        for k = 1:3
+            if isequal(k,1)
+                sH{k}            = (ones(size(MICSmalawi.sex(s))) == 1);
+            else
+                sH{k}            = (MICSmalawi.sex(s) == sex(k - 1));
+            end
         end
-        sH                   = dATaMICS{i}{1} & sEX;
-        
+    
         for j = 1:numel(x{1}) - 1
-            a             = max(min(B(sH,:) + x{1}(j),min(O(sH,:),Tmics(2))),Tmics(1));
-            o             = max(min(B(sH,:) + x{1}(j + 1),min(O(sH,:),Tmics(2))),Tmics(1));
-            exposure(j,:) = sum((o - a).*w(sH,:));
-            events(j,:)   = sum((d(sH,:) >= x{1}(j) & d(sH,:) < x{1}(j + 1) & D(sH,:) >= Tmics(1) & D(sH,:) < Tmics(2)).*w(sH,:));
-            clear a o
+            a                 = max(min(B(s,G) + x{1}(j),min(O(s,G),Tmics(2))),Tmics(1));
+            o                 = max(min(B(s,G) + x{1}(j + 1),min(O(s,G),Tmics(2))),Tmics(1));
+            eX                = (sparse(o - a).*w);
+            eV                = sparse((d(s,G) >= x{1}(j) & d(s,G) < x{1}(j + 1) & D(s,G) >= Tdhs(1) & D(s,G) < Tdhs(2)).*w);
+            for k = 1:3
+                exposure{k}(j,:) = full(sum(eX(sH{k},:)));
+                events{k}(j,:)   = full(sum(eV(sH{k},:)));
+            end
+            clear a o eX eV
             clc;
-            [31 j/(numel(x{1}) - 1)]
+            [i 31 j/(numel(x{1}) - 1)]
         end
-
-        SRB                  = ((MICSmalawi.sex(s) == 1 & B(s,:) >= Tmics(1) & B(s,:) < Tmics(2))'*w(s,:))./((MICSmalawi.sex(s) == 2 & B(s,:) >= Tmics(1) & B(s,:) < Tmics(2))'*w(s,:));
-        m                    = events./exposure;
-        q                    = 1 - [ones(1,R + 1);exp(-cumsum(m.*n))];
-
-        TaBle.q{k,h}         = q;    
-        TaBle.SRB{k,h}       = SRB;
-        TaBle.tAU{k,h}       = dATe{1}';
-        clear sEX events exposure m q SRB
-    end
+        for k = 1:3
+            m                 = events{k}./exposure{k};
+            q                 = 1 - [ones(1,sum(G));exp(-cumsum(m.*n))];
+            TaBle.q{k,h}(:,G) = q;
+            if isequal(g,1)
+                TaBle.tAU{k,h}   = dATe{1}';
+            end
+            clear m q
+        end
+        clear events exposure sH
     
-    A                    = [max(min(MICSmalawi.age(dATaMICS{i}{1})),15),min(max(MICSmalawi.age(dATaMICS{i}{1})),49)];
-    TFR                  = 0;
-    for j = A(1):A(2)
-        a        = max(min(ageS(s,:) - 3,j + 1),j);
-        o        = max(min(ageS(s,:),j + 1),j);
-        exposure = sum((MICSmalawi.k(s) == 1).*(o - a).*w(s,:));
-        events   = sum((dATe{2}(2) - B(s,:) <= 3 & dATe{2}(2) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
-        TFR      = TFR + events./exposure;
-        clc;
-        [32 (j - A(1) + 1)/(A(2) - A(1) + 1)]
-    end
+        SRB                     = full(sum(sparse(MICSmalawi.sex(s) == 1 & B(s,G) >= Tmics(1) & B(s,G) < Tmics(2)).*w))./full(sum(sparse(MICSmalawi.sex(s) == 2 & B(s,G) >= Tmics(1) & B(s,G) < Tmics(2)).*w));
+        TaBle.SRB{1,h}(:,G)     = SRB;
+        clear SRB
     
-    TaBle.TFR{1,h}       = TFR;
-    TaBle.sRB{1,h}       = sum((MICSmalawi.sex(s) == 1).*w(s,:))./sum((MICSmalawi.sex(s) == 2).*w(s,:));
-    TaBle.parity{1,h}    = sum(~isnan(MICSmalawi.bidx(s)).*w(s,:))./sum((MICSmalawi.k(s) == 1).*w(s,:));
-    TaBle.childless{1,h} = sum((MICSmalawi.mother(s) ~= 1 & MICSmalawi.k(s) == 1).*w(s,:))./sum((MICSmalawi.k(s) == 1).*w(s,:))*100;
-    clear h j TFR w A
+        A                       = [max(min(MICSmalawi.age(dATaMICS{i}{1})),15),min(max(MICSmalawi.age(dATaMICS{i}{1})),49)];
+        TFR                     = 0;
+        for j = A(1):A(2)
+            a                 = max(min(ageS(s,G) - 3,j + 1),j);
+            o                 = max(min(ageS(s,G),j + 1),j);
+            exposure          = sum(sparse(MICSmalawi.k(s) == 1).*sparse(o - a).*w);
+            events            = sum(sparse(dATe{2}(2) - B(s,G) <= 3 & dATe{2}(2) - B(s,G) > 0).*sparse(ageB(s,G) >= j & ageB(s,G) < j + 1).*w);
+            TFR               = TFR + events./exposure;
+            clc;
+            [i 32 (j - A(1) + 1)/(A(2) - A(1) + 1)]
+            clear a 0 exposure events
+        end
+        
+        TaBle.TFR{1,h}(G)       = TFR;
+        TaBle.sRB{1,h}(G)       = sum((MICSmalawi.sex(s) == 1).*w)./sum((MICSmalawi.sex(s) == 2).*w);
+        TaBle.parity{1,h}(G)    = sum(~isnan(MICSmalawi.bidx(s)).*w)./sum((MICSmalawi.k(s) == 1).*w);
+        TaBle.childless{1,h}(G) = sum((MICSmalawi.mother(s) ~= 1 & MICSmalawi.k(s) == 1).*w)./sum((MICSmalawi.k(s) == 1).*w)*100;
+        clear j k TFR w A
+    end
+    clear h s
 end
 
 for i = 1:numel(dATaMICS)
