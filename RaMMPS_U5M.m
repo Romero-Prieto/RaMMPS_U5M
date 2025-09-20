@@ -28,13 +28,14 @@ pATh                  = "/Users/lshjr3/Documents/RaMMPS/under-five mortality/";
 load(char(pATh + "Results/RaMMPS.mat"),'RaMMPS','RESolUTioN');
 x{1}                  = [(0:7:28)/365.25,[(2:1:12),(15:3:24),(36:12:60)]/12]';
 x{2}                  = [string(0);string([(7:7:28)';(2:1:11)';(12:3:24)';(36:12:60)']) + char([kron('d',ones(4,1));kron('m',ones(18,1))])];
+x{3}                  = round(x{1}*365.25*24);
 n                     = diff(x{1},1);
 instrument            = {'TPH','FPH'};
 date                  = max(RaMMPS.interview);
 Ts                    = {datetime([2014 year(date)]',[1 month(date)]',[1 day(date)]'),datetime([2014 2016]',1,1),datetime([2016 2018]',1,1),datetime([2018 2020]',1,1),datetime([2020 2022]',1,1),datetime([2022 year(date)]',[1 month(date)]',[1 day(date)]')};
 sET                   = [RaMMPS.WR(RaMMPS.k == 1),ones(sum(RaMMPS.k == 1),1)];
 models                = {'post-strat.','selected'};
-R                     = 1000;
+R                     = 50;
 aGEs                  = [5 16 23];
 
 
@@ -80,7 +81,6 @@ for i = 1:numel(dATa)
     pOPs{numel(Ts) + 2,i}    = pOPs{1,i};
     pOPs{numel(Ts) + 2,i}{1} = char(pOPs{1,i}{1} + " (male)");
 end
-
 
 p                     = rand(size(RaMMPS,1),R + 1);
 d                     = (p.*RaMMPS.D_min + (1 - p).*RaMMPS.D_max)/365.25;
@@ -264,9 +264,7 @@ end
 
 
 load(char(pATh + "Results/RaMMPS.mat"),'DHSmalawi');
-mIn                   = min(DHSmalawi.interview);
-mAx                   = max(DHSmalawi.interview);
-mAx                   = mean([mIn mAx]);
+mAx                   = median(DHSmalawi.interview);
 mIn                   = datetime([year(mAx) - 5,month(mAx),day(mAx)],'Format','dd/MM/yyyy');
 dATe{1}               = [mIn mAx];
 dATe{2}               = eXAcTTime(dATe{1});
@@ -334,7 +332,6 @@ for j = 1:numel(sET)
         clear sT sB
     end
     clear cal
-    clc;
     j/numel(sET)
 end
 
@@ -369,7 +366,7 @@ for i = 1:numel(dATaDHS)
             events(j,:)   = sum((d(sH,:) >= x{1}(j) & d(sH,:) < x{1}(j + 1) & D(sH,:) >= Tdhs(1) & D(sH,:) < Tdhs(2)).*w(sH,:));
             clear a o
             clc;
-            j/(numel(x{1}) - 1)
+            [21 j/(numel(x{1}) - 1)]
         end
 
         births               = sum(DHSmalawi.births(s).*w(s,:));
@@ -396,7 +393,7 @@ for i = 1:numel(dATaDHS)
         events   = sum((dATe{2}(2) - B(s,:) <= 3 & dATe{2}(2) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
         TFR      = TFR + events./exposure;
         clc;
-        (j - A(1) + 1)/(A(2) - A(1) + 1)
+        [22 (j - A(1) + 1)/(A(2) - A(1) + 1)]
     end
     
     TaBle.TFR{1,h}       = TFR;
@@ -413,9 +410,7 @@ end
 
 
 load(char(pATh + "Results/RaMMPS.mat"),'MICSmalawi');
-mIn                   = min(MICSmalawi.interview);
-mAx                   = max(MICSmalawi.interview);
-mAx                   = mean([mIn mAx]);
+mAx                   = median(MICSmalawi.interview);
 mIn                   = datetime([year(mAx) - 5,month(mAx),day(mAx)],'Format','dd/MM/yyyy');
 dATe{1}               = [mIn mAx];
 dATe{2}               = eXAcTTime(dATe{1});
@@ -488,7 +483,7 @@ for i = 1:numel(dATaMICS)
             events(j,:)   = sum((d(sH,:) >= x{1}(j) & d(sH,:) < x{1}(j + 1) & D(sH,:) >= Tmics(1) & D(sH,:) < Tmics(2)).*w(sH,:));
             clear a o
             clc;
-            j/(numel(x{1}) - 1)
+            [31 j/(numel(x{1}) - 1)]
         end
 
         SRB                  = ((MICSmalawi.sex(s) == 1 & B(s,:) >= Tmics(1) & B(s,:) < Tmics(2))'*w(s,:))./((MICSmalawi.sex(s) == 2 & B(s,:) >= Tmics(1) & B(s,:) < Tmics(2))'*w(s,:));
@@ -510,7 +505,7 @@ for i = 1:numel(dATaMICS)
         events   = sum((dATe{2}(2) - B(s,:) <= 3 & dATe{2}(2) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
         TFR      = TFR + events./exposure;
         clc;
-        (j - A(1) + 1)/(A(2) - A(1) + 1)
+        [32 (j - A(1) + 1)/(A(2) - A(1) + 1)]
     end
     
     TaBle.TFR{1,h}       = TFR;
@@ -573,7 +568,7 @@ TaBle.s{i + 1,h}   = {IGME{5},IGME{6},IGME{7},datetime(IGME{1} - .5,7,1)};
 pOPs{i + 1,h}      = {'UN IGME';''};
 TaBle.tAU{i + 1,h} = datetime(IGME{1} - .5,7,1);
 
-[qS,qP]            = RaMMPS_Bayes(000,0);
+[qS,qP]            = RaMMPS_Bayes(000,0); %Only run this line once, as RaMMPS_Bayes(5000,250)%
 TaBleEs.q          = TaBle.q;
 pOPsex             = pOPs(1,:);
 for i = 1:numel(qS)
@@ -815,6 +810,9 @@ sets         = sEt;
 vars         = vARs;
 save(char(pATh + "Results/Tables/Table_O1.mat"),'bOx','pOPsd','vars','sets');
 clear table labels temp bOx pOPsd vars sets s
+
+
+
 
 
 P                        = cell(0);
