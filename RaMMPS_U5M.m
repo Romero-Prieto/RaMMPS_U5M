@@ -35,7 +35,7 @@ date                  = max(RaMMPS.interview);
 Ts                    = {datetime([2014 year(date)]',[1 month(date)]',[1 day(date)]'),datetime([2014 2016]',1,1),datetime([2016 2018]',1,1),datetime([2018 2020]',1,1),datetime([2020 2022]',1,1),datetime([2022 year(date)]',[1 month(date)]',[1 day(date)]')};
 sET                   = [RaMMPS.WR(RaMMPS.k == 1),ones(sum(RaMMPS.k == 1),1)];
 models                = {'post-strat.','selected'};
-R                     = 1000;
+R                     = 5000;
 aGEs                  = [5 16 23];
 
 
@@ -413,7 +413,7 @@ for i = 1:numel(dATaDHS)
         TaBle.sRB{1,h}(G)       = sum((DHSmalawi.sex(s) == 1).*w)./sum((DHSmalawi.sex(s) == 2).*w);
         TaBle.parity{1,h}(G)    = sum(~isnan(DHSmalawi.bidx(s)).*w)./sum((DHSmalawi.k(s) == 1).*w);
         TaBle.childless{1,h}(G) = sum((DHSmalawi.mother(s) ~= 1 & DHSmalawi.k(s) == 1).*w)./sum((DHSmalawi.k(s) == 1).*w)*100;
-        clear j k TFR w A
+        clear j k TFR w A g
     end
     clear h s
 end
@@ -538,7 +538,7 @@ for i = 1:numel(dATaMICS)
         TaBle.sRB{1,h}(G)       = sum((MICSmalawi.sex(s) == 1).*w)./sum((MICSmalawi.sex(s) == 2).*w);
         TaBle.parity{1,h}(G)    = sum(~isnan(MICSmalawi.bidx(s)).*w)./sum((MICSmalawi.k(s) == 1).*w);
         TaBle.childless{1,h}(G) = sum((MICSmalawi.mother(s) ~= 1 & MICSmalawi.k(s) == 1).*w)./sum((MICSmalawi.k(s) == 1).*w)*100;
-        clear j k TFR w A
+        clear j k TFR w A g
     end
     clear h s
 end
@@ -596,7 +596,7 @@ TaBle.s{i + 1,h}   = {IGME{5},IGME{6},IGME{7},datetime(IGME{1} - .5,7,1)};
 pOPs{i + 1,h}      = {'UN IGME';''};
 TaBle.tAU{i + 1,h} = datetime(IGME{1} - .5,7,1);
 
-[qS,qP]            = RaMMPS_Bayes(000,0); %Only run this line once, as RaMMPS_Bayes(5000,250)%
+[qS,qP]            = RaMMPS_Bayes(5000,250); %Only run this line once, as RaMMPS_Bayes(5000,250)%
 TaBleEs.q          = TaBle.q;
 pOPsex             = pOPs(1,:);
 for i = 1:numel(qS)
