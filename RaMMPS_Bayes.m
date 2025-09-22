@@ -244,7 +244,7 @@ exportgraphics(gcf,char(pATh + "Results/Table_A3.png"),'Resolution',RESolUTioN);
 
 
 
-
+models                   = {'Post-stratified','Selected'};
 LAB                      = XB(nX);
 for i = 1:numel(LAB)
     temp   = char(LAB{i});
@@ -367,11 +367,13 @@ for j = 1:2:numel(sample)
                 G{1}{i,4} = plot([0 0],[0 max(fw)*1.50],'LineWidth',1.25*z,'Color','k','LineStyle','-');
             end
         end
+        clear w fw
+        
         if isequal(i,9)
             for k = 1:numel(models)
                 leGend{k} = char("$\textbf{" + models{k} + "}$");
             end
-            legend(leGend,'Interpreter','latex','FontSize',9*z,'FontAngle','oblique','Location','southoutside','NumColumns',2,'Box','off');
+            legend(leGend,'Interpreter','latex','FontSize',11*z,'FontAngle','oblique','Location','southoutside','NumColumns',2,'Box','off');
         end
 
         t                = ax{i}.XAxis.TickValues;

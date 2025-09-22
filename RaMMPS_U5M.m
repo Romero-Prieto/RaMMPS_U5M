@@ -16,7 +16,7 @@ for i = 1:numel(lISt)
     clear options j sET
 end
 clear lISt i
-RESolUTioN            = 300;
+RESolUTioN            = 600;
 save(char(pATh + "Results/RaMMPSf.mat"),'RaMMPS','RESolUTioN');
 RaMMPS                = RaMMPS(RaMMPS.caseid ~= "0A0" & isundefined(RaMMPS.missing),:);
 RaMMPSHH              = RaMMPSHH(RaMMPSHH.caseid ~= "0A0" & isundefined(RaMMPSHH.missing),:);
@@ -596,7 +596,7 @@ TaBle.s{i + 1,h}   = {IGME{5},IGME{6},IGME{7},datetime(IGME{1} - .5,7,1)};
 pOPs{i + 1,h}      = {'UN IGME';''};
 TaBle.tAU{i + 1,h} = datetime(IGME{1} - .5,7,1);
 
-[qS,qP]            = RaMMPS_Bayes(5000,250); %Only run this line once, as RaMMPS_Bayes(5000,250)%
+[qS,qP]            = RaMMPS_Bayes(000,0); %Only run this line once, as RaMMPS_Bayes(5000,250)%
 TaBleEs.q          = TaBle.q;
 pOPsex             = pOPs(1,:);
 for i = 1:numel(qS)
@@ -651,7 +651,7 @@ sEt          = {'$\textrm{Childless Women \%}$','$\textrm{Average Parity}$','$\t
 models       = {'$\textit{post-strat.}$','$\textit{selected}$'};
 vARs         = {models models models models};
 foRMaT       = {'%0.2f','%0.2f','%0.2f'};
-nOTe         = {'$\textrm{Instrument}$','$\textit{Bootstrapping}$ $\mathrm{p50}$/$\mathit{[p2.5,p97.5]}$'};
+nOTe         = {'$\textrm{Instrument}$',''};
 lABs         = {{1} {2} {3} {4 5 6} {7 8 9}};
 tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,label,cell2mat(table),0.140,0.055,[]);
 exportgraphics(gcf,char(pATh + "Results/Table_3.png"),'Resolution',RESolUTioN);
@@ -725,7 +725,7 @@ end
 
 nOTePredict2 = {'$\textrm{Instrument}$/$\textit{method}$','$\mathrm{if\,direct\,estimation,}$ $\mathit{Bootstrapping\,CI.}$ $\mathrm{If\,predicted,\,Poisson-Hamiltonian\,MCMC\,estimation.}$ $\mathrm{p50}$/$\mathit{[p2.5,p97.5]}$ $\mathrm{posterior\,distribution.}$'};
 lABs         = {{1 2} {3 4} {5 6} {7 8} {9 10}};
-tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTePredict2,label,cell2mat(table),0.175,0.060,[]);
+tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,label,cell2mat(table),0.175,0.060,[]);
 exportgraphics(gcf,char(pATh + "Results/Table_5.png"),'Resolution',RESolUTioN);
 s            = [1 2 3 4 5 6 7 8 9 10];
 bOx          = table(s,:);
@@ -1077,7 +1077,7 @@ for i = 1:6
         end
     end
 end
-exportgraphics(gcf,char(pATh + "Results/Figure_3.png"),'Resolution',RESolUTioN);
+exportgraphics(gcf,char(pATh + "Results/Figure_O1.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
 end
@@ -1156,7 +1156,7 @@ for i = 1:6
         end
     end
 end
-exportgraphics(gcf,char(pATh + "Results/Figure_4.png"),'Resolution',RESolUTioN);
+exportgraphics(gcf,char(pATh + "Results/Figure_O3.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
 end
@@ -1235,7 +1235,7 @@ for i = 1:6
         end
     end
 end
-exportgraphics(gcf,char(pATh + "Results/Figure_3Reg.png"),'Resolution',RESolUTioN);
+exportgraphics(gcf,char(pATh + "Results/Figure_O2.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
 end
@@ -1314,7 +1314,7 @@ for i = 1:6
         end
     end
 end
-exportgraphics(gcf,char(pATh + "Results/Figure_4Reg.png"),'Resolution',RESolUTioN);
+exportgraphics(gcf,char(pATh + "Results/Figure_3.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
 end
@@ -1335,7 +1335,9 @@ for i = 1:3
     ax{i}.XAxis.TickLabelFormat = '%.1f';
     ax{i}.YAxis.TickLabelFormat = '%.2f';
     xlabel('$\textbf{Post-stratified weights}$','Interpreter','latex','FontSize',11*z);
-    ylabel('$\textbf{Probability density function}$','Interpreter','latex','FontSize',11*z);
+    if isequal(i,1)
+        ylabel('$\textbf{Probability density function}$','Interpreter','latex','FontSize',11*z);
+    end
     xlim([0 15])    
     grid on;
     box on;
@@ -1559,7 +1561,7 @@ lABs         = {{1 2 3 4} {5}};
 vARs         = {numbers numbers numbers numbers};
 foRMaT       = {'%0.0f','%0.0f','%0.0f'};
 
-nOTe         = {'$\textrm{Round of data collection}$/$\textrm{Instrument}$','$\textrm{For consistency, FPHs also collect SBHs (i.e., children alive and ever born). Due to missing values, excluded interviews cannot be used to estimate post-stratification weights.}$'};
+nOTe         = {'$\textrm{Round of data collection}$/$\textrm{Instrument}$',''};
 tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,pOP,taBLe,0.190,0.065,[]);
 exportgraphics(gcf,char(pATh + "Results/Table_1.png"),'Resolution',RESolUTioN);
 s            = [1 2 3 4 5];
@@ -1683,7 +1685,7 @@ lABs         = {{1} {3 4 5} {6 7 8} {9 10 11} {12 13 14} {15} {17} {19} {21}};
 vARs         = {models models models modelsMICS([1 3]) modelsDHS([1 3])};
 foRMaT       = {'%0.2f','%0.2f','%0.2f'};
 
-nOTe         = {'$\textrm{Attributes}$/$\textrm{Instrument}$','$\mathit{Bootstrapping}$ $\mathrm{p50}$/$\mathit{[p2.5,p97.5]}$'};
+nOTe         = {'$\textrm{Attributes}$/$\textrm{Instrument}$',''};
 tABleBAyEs(sEt([1 2 3 5 4]),vARs,foRMaT,lABs,nOTe,pOPsd,cell2mat(bOx(:,[1 2 3 4 5 6 10 12 7 9])),0.190,0.065,[]);
 exportgraphics(gcf,char(pATh + "Results/Table_2.png"),'Resolution',RESolUTioN);
 s            = [1 3 4 5 6 7 8 9 10 11 12 13 14 15 17 19 21];
