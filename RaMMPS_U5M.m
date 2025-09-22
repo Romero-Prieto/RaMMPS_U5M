@@ -596,7 +596,7 @@ TaBle.s{i + 1,h}   = {IGME{5},IGME{6},IGME{7},datetime(IGME{1} - .5,7,1)};
 pOPs{i + 1,h}      = {'UN IGME';''};
 TaBle.tAU{i + 1,h} = datetime(IGME{1} - .5,7,1);
 
-[qS,qP]            = RaMMPS_Bayes(000,0); %Only run this line once, as RaMMPS_Bayes(5000,250)%
+[qS,qP]            = RaMMPS_Bayes(5000,250); %Only run this line once, as RaMMPS_Bayes(5000,250)%
 TaBleEs.q          = TaBle.q;
 pOPsex             = pOPs(1,:);
 for i = 1:numel(qS)
