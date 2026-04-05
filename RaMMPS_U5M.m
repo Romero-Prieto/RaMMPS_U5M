@@ -34,7 +34,7 @@ instrument            = {'TPH','FPH'};
 date                  = max(RaMMPS.interview);
 Ts                    = {datetime([2014 year(date)]',[1 month(date)]',[1 day(date)]'),datetime([2014 2016]',1,1),datetime([2016 2018]',1,1),datetime([2018 2020]',1,1),datetime([2020 2022]',1,1),datetime([2022 year(date)]',[1 month(date)]',[1 day(date)]')};
 sET                   = [RaMMPS.WR(RaMMPS.k == 1),ones(sum(RaMMPS.k == 1),1)];
-models                = {'post-strat.','selected'};
+models                = {'poststrat.','selected'};
 R                     = 5000;
 aGEs                  = [5 16 23];
 
@@ -67,7 +67,7 @@ for i = 1:numel(instrument)
         dATa{h}    = {RaMMPS.sample == instrument{i},WRaMMPS{j}};
         for k = 1:numel(Ts)
             date      = eXAcTTime(Ts{k});
-            date      = string(instrument{i}) + ", " + string(sprintf('%0.1f',date(1))) + "-" + string(sprintf('%0.1f',date(2)));
+            date      = string(instrument{i}) + ", " + string(sprintf('%0.1f',date(1))) + "--" + string(sprintf('%0.1f',date(2)));
             pOPs{k,h} = {char(date);''};
             clear date
         end
@@ -97,8 +97,10 @@ D                     = B + d;
 O                     = min(D,interview);
 p                     = rand(size(RaMMPS,1),R + 1);
 ageS                  = p.*RaMMPS.age + (1 - p).*(RaMMPS.age + 1);
-ageB                  = ageS - (interview - B);
-ageSB                 = ageS - (interview - sB);
+dob                   = interview - ageS;
+ageU                  = eXAcTTime(Ts{1}(2)) - dob;
+ageB                  = B - dob;
+ageSB                 = sB - dob;
 sEL                   = (RaMMPS.survival == 'dead' | RaMMPS.survival == 'alive');
         
 for i = 1:numel(dATa)
@@ -145,10 +147,10 @@ for i = 1:numel(dATa)
     A                    = [max(min(RaMMPS.age(dATa{i}{1})),15),min(max(RaMMPS.age(dATa{i}{1})),49)];
     TFR                  = 0;
     for j = A(1):A(2)
-        a               = max(min(ageS(s,:) - 3,j + 1),j);
-        o               = max(min(ageS(s,:),j + 1),j);
+        a               = max(min(min(ageS(s,:),ageU(s,:) - 3),j + 1),j);
+        o               = max(min(min(ageS(s,:),ageU(s,:)),j + 1),j);
         exposure        = sum((RaMMPS.k(s) == 1).*(o - a).*w(s,:));
-        events          = sum((interview(s) - B(s,:) <= 3 & interview(s) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
+        events          = sum((eXAcTTime(Ts{1}(2)) - B(s,:) <= 3 & eXAcTTime(Ts{1}(2)) - B(s,:) > 0).*(ageB(s,:) >= j & ageB(s,:) < j + 1).*w(s,:));
         TFR             = TFR + events./max(exposure,eps);
         clear events exposure a o
         clc;
@@ -157,10 +159,10 @@ for i = 1:numel(dATa)
     
     TSR                  = 0;
     for j = A(1):A(2)
-        a               = max(min(ageS(s,:) - 3,j + 1),j);
-        o               = max(min(ageS(s,:),j + 1),j);
+        a               = max(min(min(ageS(s,:),ageU(s,:) - 3),j + 1),j);
+        o               = max(min(min(ageS(s,:),ageU(s,:)),j + 1),j);
         exposure        = sum((RaMMPS.k(s) == 1).*(o - a).*w(s,:));
-        events          = sum((interview(s) - sB(s,:) <= 3 & interview(s) - sB(s,:) > 0).*(ageSB(s,:) >= j & ageSB(s,:) < j + 1).*w(s,:));
+        events          = sum((eXAcTTime(Ts{1}(2)) - sB(s,:) <= 3 & eXAcTTime(Ts{1}(2)) - sB(s,:) > 0).*(ageSB(s,:) >= j & ageSB(s,:) < j + 1).*w(s,:));
         TSR             = TSR + events./max(exposure,eps);
         clear events exposure a o
         clc;
@@ -269,14 +271,14 @@ mIn                   = datetime([year(mAx) - 5,month(mAx),day(mAx)],'Format','d
 dATe{1}               = [mIn mAx];
 dATe{2}               = eXAcTTime(dATe{1});
 Tdhs                  = dATe{2};
-models                = {'Women 15-49','Women 18-49','Women 18-49, mobile owners','Women 18-49, mobile owners'};
+models                = {'Women 15--49','Women 18--49','Women 18--49, mobile owners','Women 18--49, mobile owners'};
 dATaDHS{1}            = {DHSmalawi.age >= 15,DHSmalawi.W};
 dATaDHS{2}            = {DHSmalawi.age >= 18,DHSmalawi.W};
 dATaDHS{3}            = {DHSmalawi.age >= 18 & DHSmalawi.mobile == 1 & DHSmalawi.jure == 1,DHSmalawi.WR};
 dATaDHS{4}            = {dATaDHS{3}{1},DHSmalawi.W};
 
 for i = 1:numel(dATaDHS)
-    data      = "DHS VII, " + string(sprintf('%0.1f',dATe{2}(1))) + "-" + string(sprintf('%0.1f',dATe{2}(2)));
+    data      = "DHS VII, " + string(sprintf('%0.1f',dATe{2}(1))) + "--" + string(sprintf('%0.1f',dATe{2}(2)));
     h         = i + numel(dATa) + numel(dATaB);
     pOPs{1,h} = {data;models{i}};
     pOPs{2,h} = {data + " (female)";models{i}};
@@ -343,7 +345,8 @@ D                     = B + d;
 O                     = min(D,Tdhs(2));
 p                     = rand(size(DHSmalawi,1),R + 1);
 dob                   = p.*eXAcTTime(DHSmalawi.DOB) + (1 - p).*eXAcTTime(datetime(year(DHSmalawi.DOB),month(DHSmalawi.DOB) + 1,day(DHSmalawi.DOB)));
-ageS                  = dATe{2}(2) - dob;
+ageU                  = dATe{2}(2) - dob;
+ageS                  = eXAcTTime(DHSmalawi.interview) - dob;
 ageB                  = B - dob;
 
 bLOcKs                = 5;
@@ -399,10 +402,11 @@ for i = 1:numel(dATaDHS)
         A                    = [max(min(DHSmalawi.age(dATaDHS{i}{1})),15),min(max(DHSmalawi.age(dATaDHS{i}{1})),49)];
         TFR                  = 0;
         for j = A(1):A(2)
-            a                 = max(min(ageS(s,G) - 3,j + 1),j);
-            o                 = max(min(ageS(s,G),j + 1),j);
+            a                 = max(min(min(ageS(s,G),ageU(s,G) - 3),j + 1),j);
+            o                 = max(min(min(ageS(s,G),ageU(s,G)),j + 1),j);
             exposure          = sum(sparse(DHSmalawi.k(s) == 1).*sparse(o - a).*w);
             events            = sum(sparse(dATe{2}(2) - B(s,G) <= 3 & dATe{2}(2) - B(s,G) > 0).*sparse(ageB(s,G) >= j & ageB(s,G) < j + 1).*w);
+            
             TFR               = TFR + events./exposure;
             clc;
             [i 22 (j - A(1) + 1)/(A(2) - A(1) + 1)]
@@ -430,14 +434,14 @@ mIn                   = datetime([year(mAx) - 5,month(mAx),day(mAx)],'Format','d
 dATe{1}               = [mIn mAx];
 dATe{2}               = eXAcTTime(dATe{1});
 Tmics                 = dATe{2};
-models                = {'Women 15-49','Women 18-49','Women 18-49, mobile owners','Women 18-49, mobile owners'};
+models                = {'Women 15--49','Women 18--49','Women 18--49, mobile owners','Women 18--49, mobile owners'};
 dATaMICS{1}           = {MICSmalawi.age >= 15,MICSmalawi.W};
 dATaMICS{2}           = {MICSmalawi.age >= 18,MICSmalawi.W};
 dATaMICS{3}           = {MICSmalawi.age >= 18 & MICSmalawi.mobile == 1,MICSmalawi.WR};
 dATaMICS{4}           = {dATaMICS{3}{1},MICSmalawi.W};
 
 for i = 1:numel(dATaMICS)
-    data      = "MICS 6, " + string(sprintf('%0.1f',dATe{2}(1))) + "-" + string(sprintf('%0.1f',dATe{2}(2)));
+    data      = "MICS 6, " + string(sprintf('%0.1f',dATe{2}(1))) + "--" + string(sprintf('%0.1f',dATe{2}(2)));
     h         = i + numel(dATa) + numel(dATaB) + numel(dATaDHS);
     pOPs{1,h} = {data;models{i}};
     pOPs{2,h} = {data + " (female)";models{i}};
@@ -476,7 +480,8 @@ O                     = min(D,Tmics(2));
 
 p                     = rand(size(MICSmalawi,1),R + 1);
 dob                   = p.*eXAcTTime(MICSmalawi.DOB_min) + (1 - p).*eXAcTTime(MICSmalawi.DOB_max);
-ageS                  = dATe{2}(2) - dob;
+ageU                  = dATe{2}(2) - dob;
+ageS                  = eXAcTTime(MICSmalawi.interview) - dob;
 ageB                  = B - dob;
 
 for i = 1:numel(dATaMICS)
@@ -524,8 +529,8 @@ for i = 1:numel(dATaMICS)
         A                       = [max(min(MICSmalawi.age(dATaMICS{i}{1})),15),min(max(MICSmalawi.age(dATaMICS{i}{1})),49)];
         TFR                     = 0;
         for j = A(1):A(2)
-            a                 = max(min(ageS(s,G) - 3,j + 1),j);
-            o                 = max(min(ageS(s,G),j + 1),j);
+            a                 = max(min(min(ageS(s,G),ageU(s,G) - 3),j + 1),j);
+            o                 = max(min(min(ageS(s,G),ageU(s,G)),j + 1),j);
             exposure          = sum(sparse(MICSmalawi.k(s) == 1).*sparse(o - a).*w);
             events            = sum(sparse(dATe{2}(2) - B(s,G) <= 3 & dATe{2}(2) - B(s,G) > 0).*sparse(ageB(s,G) >= j & ageB(s,G) < j + 1).*w);
             TFR               = TFR + events./exposure;
@@ -596,7 +601,7 @@ TaBle.s{i + 1,h}   = {IGME{5},IGME{6},IGME{7},datetime(IGME{1} - .5,7,1)};
 pOPs{i + 1,h}      = {'UN IGME';''};
 TaBle.tAU{i + 1,h} = datetime(IGME{1} - .5,7,1);
 
-[qS,qP]            = RaMMPS_Bayes(5000,250); %Only run this line once, as RaMMPS_Bayes(5000,250)%
+[qS,qP]            = RaMMPS_Bayes(000,0); %Only run this line once, as RaMMPS_Bayes(5000,250)%
 TaBleEs.q          = TaBle.q;
 pOPsex             = pOPs(1,:);
 for i = 1:numel(qS)
@@ -648,7 +653,7 @@ for i = 1:numel(selection)
 end
 
 sEt          = {'$\textrm{Childless Women \%}$','$\textrm{Average Parity}$','$\textrm{TFR}$','$\textrm{SRB}$'};
-models       = {'$\textit{post-strat.}$','$\textit{selected}$'};
+models       = {'$\textit{poststrat.}$','$\textit{selected}$'};
 vARs         = {models models models models};
 foRMaT       = {'%0.2f','%0.2f','%0.2f'};
 nOTe         = {'$\textrm{Instrument}$',''};
@@ -724,10 +729,10 @@ for i = 1:numel(selection)
 end
 
 nOTePredict2 = {'$\textrm{Instrument}$/$\textit{method}$','$\mathrm{if\,direct\,estimation,}$ $\mathit{Bootstrapping\,CI.}$ $\mathrm{If\,predicted,\,Poisson-Hamiltonian\,MCMC\,estimation.}$ $\mathrm{p50}$/$\mathit{[p2.5,p97.5]}$ $\mathrm{posterior\,distribution.}$'};
-lABs         = {{1 2} {3 4} {5 6} {7 8} {9 10}};
+lABs         = {{1 3 5} {2 4 6} {7 8} {9 10}};
 tABleBAyEs(sEt,vARs,foRMaT,lABs,nOTe,label,cell2mat(table),0.175,0.060,[]);
 exportgraphics(gcf,char(pATh + "Results/Table_5.png"),'Resolution',RESolUTioN);
-s            = [1 2 3 4 5 6 7 8 9 10];
+s            = [1 3 5 2 4 6 7 8 9 10];
 bOx          = table(s,:);
 pOPsd        = label(s);
 sets         = sEt;
@@ -846,7 +851,8 @@ clear table labels temp bOx pOPsd vars sets s
 P                        = cell(0);
 selection                = {[1 1],[1 3],[2 5],[1 8],[1 12],[1 15]};
 selectionT               = {[1 1],[1 3],[3 5],[1 8],[1 12],[5 15]};
-LAB                      = {'Neonatal mortality rate $\mathbf{\it{q}}\mathbf{(28}\mathbf{\it{d}}\mathbf{)}$','Infant mortality rate $\mathbf{\it{q}}\mathbf{(12}\mathbf{\it{m}}\mathbf{)}$','Under-five mortality rate $\mathbf{\it{q}}\mathbf{(60}\mathbf{\it{m}}\mathbf{)}$'};
+LAB                      = {'Neonatal mortality rate $\textbf{\textit{q}}\textbf{(28}\textbf{\textit{d}}\textbf{)}$','Infant mortality rate $\textbf{\textit{q}}\textbf{(12}\textbf{\textit{m}}\textbf{)}$','Under-five mortality rate $\textbf{\textit{q}}\textbf{(60}\textbf{\textit{m}}\textbf{)}$'};
+
 load(char(pATh + "Results/paleTTe.mat"),'paleTTe');
 coloR                    = paleTTe([1 2 3 7 4 8]);
 
@@ -871,16 +877,16 @@ for i = 1:6
 
         t                           = ax{i}.XAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.XTickLabelRotation         = 0;
         ax{i}.XAxis.TickLabels           = T;
         ax{i}.XAxis.TickLabelInterpreter = 'latex';
         clear t T
 
-        xlabel('$\textbf{Deaths per 1000 births (log scale)}$','Interpreter','latex','FontSize',11*z);
+        xlabel('$\textbf{Deaths per 1,000 Births (log scale)}$','Interpreter','latex','FontSize',11*z);
         if isequal(mod(i,3),1)
-            ylabel('$\textbf{Kernel density}$','Interpreter','latex','FontSize',11*z);
+            ylabel('$\textbf{Kernel Density}$','Interpreter','latex','FontSize',11*z);
         end
     else
         d                           = scatter(datetime('01-Jan-2021'),0);
@@ -902,7 +908,7 @@ for i = 1:6
         
         T                           = ax{i}.XAxis.TickLabels;
         for j = 1:numel(T)
-            T{j} = char("$\mathbf{" + T{j} + "}$");
+            T{j} = char("$\mathrm{" + T{j} + "}$");
         end
         ax{i}.XTickLabelRotation         = 0;
         ax{i}.XAxis.TickLabels           = T;
@@ -911,7 +917,7 @@ for i = 1:6
 
         t                           = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
@@ -920,7 +926,7 @@ for i = 1:6
 
         xlabel('$\textbf{Year}$','Interpreter','latex','FontSize',11*z);
         if isequal(mod(i,3),1)
-            ylabel('$\textbf{Deaths per 1000 births (log scale)}$','Interpreter','latex','FontSize',11*z);
+            ylabel('$\textbf{Deaths per 1,000 Births (log scale)}$','Interpreter','latex','FontSize',11*z);
         end        
     end
     title(char("$\textbf{" + string(char(96 + i)) + ". " + string(LAB{mod(i - 1,3) + 1}) + "}$"),'Interpreter','latex','FontSize',12*z);
@@ -957,19 +963,13 @@ for i = 1:6
         end
         t                                = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
         ax{i}.YAxis.TickLabelInterpreter = 'latex';
         clear t T
 
-        if i == 5
-            for j = 1:numel(selection)
-                leGend{j} = char("$\textbf{" + pOPs{selection{j}(1),selection{j}(2)}{1} + "}$");
-            end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
-        end
     else
         for j = 1:numel(selectionT)
             tAU{j} = TaBle.tAU{selectionT{j}(1),selectionT{j}(2)};
@@ -992,12 +992,14 @@ for i = 1:6
         P{end + 1} = plot(datetime(ones(2,1)*[2020 1 1]),[3.125 200],'color',[0.1 0.4 0.5],'LineStyle','-.','LineWidth',1.00*z);
         if i == 2
             for j = 1:numel(selectionT)
-                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "}$");
+                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "\hspace{1.0cm}}$");
             end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end + 1} = legend(leGend,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end}.Layout.Tile = 'south';
         end
     end
 end
+exportgraphics(gcf,char(pATh + "Results/Figure_2.pdf"),'Resolution',900);
 exportgraphics(gcf,char(pATh + "Results/Figure_2.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
@@ -1036,19 +1038,12 @@ for i = 1:6
         end
         t                                = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
         ax{i}.YAxis.TickLabelInterpreter = 'latex';
         clear t T
-
-        if i == 5
-            for j = 1:numel(selection)
-                leGend{j} = char("$\textbf{" + pOPs{selection{j}(1),selection{j}(2)}{1} + "}$");
-            end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
-        end
     else
         for j = 1:numel(selectionT)
             tAU{j} = TaBle.tAU{selectionT{j}(1),selectionT{j}(2)};
@@ -1071,9 +1066,10 @@ for i = 1:6
         P{end + 1} = plot(datetime(ones(2,1)*[2020 1 1]),[3.125 200],'color',[0.1 0.4 0.5],'LineStyle','-.','LineWidth',0.75);
         if i == 2
             for j = 1:numel(selectionT)
-                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "}$");
+                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "\hspace{1.0cm}}$");
             end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end + 1} = legend(leGend,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end}.Layout.Tile = 'south';
         end
     end
 end
@@ -1115,19 +1111,12 @@ for i = 1:6
         end
         t                                = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
         ax{i}.YAxis.TickLabelInterpreter = 'latex';
         clear t T
-
-        if i == 5
-            for j = 1:numel(selection)
-                leGend{j} = char("$\textbf{" + pOPs{selection{j}(1),selection{j}(2)}{1} + "}$");
-            end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
-        end
     else
         for j = 1:numel(selectionT)
             tAU{j} = TaBle.tAU{selectionT{j}(1),selectionT{j}(2)};
@@ -1150,9 +1139,10 @@ for i = 1:6
         P{end + 1} = plot(datetime(ones(2,1)*[2020 1 1]),[3.125 200],'color',[0.1 0.4 0.5],'LineStyle','-.','LineWidth',0.75);
         if i == 2
             for j = 1:numel(selectionT)
-                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "}$");
+                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "\hspace{1.0cm}}$");
             end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
+            P{end + 1} = legend(leGend,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
+            P{end}.Layout.Tile = 'south';
         end
     end
 end
@@ -1194,19 +1184,12 @@ for i = 1:6
         end
         t                                = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
         ax{i}.YAxis.TickLabelInterpreter = 'latex';
         clear t T
-
-        if i == 5
-            for j = 1:numel(selection)
-                leGend{j} = char("$\textbf{" + pOPs{selection{j}(1),selection{j}(2)}{1} + "}$");
-            end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
-        end
     else
         for j = 1:numel(selectionT)
             tAU{j} = TaBle.tAU{selectionT{j}(1),selectionT{j}(2)};
@@ -1229,9 +1212,10 @@ for i = 1:6
         P{end + 1} = plot(datetime(ones(2,1)*[2020 1 1]),[3.125 200],'color',[0.1 0.4 0.5],'LineStyle','-.','LineWidth',0.75);
         if i == 2
             for j = 1:numel(selectionT)
-                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "}$");
+                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "\hspace{1.0cm}}$");
             end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end + 1} = legend(leGend,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+            P{end}.Layout.Tile = 'south';
         end
     end
 end
@@ -1273,19 +1257,12 @@ for i = 1:6
         end
         t                                = ax{i}.YAxis.TickValues;
         for j = 1:numel(t)
-            T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+            T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
         end
         ax{i}.YTickLabelRotation         = 0;
         ax{i}.YAxis.TickLabels           = T;
         ax{i}.YAxis.TickLabelInterpreter = 'latex';
         clear t T
-
-        if i == 5
-            for j = 1:numel(selection)
-                leGend{j} = char("$\textbf{" + pOPs{selection{j}(1),selection{j}(2)}{1} + "}$");
-            end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
-        end
     else
         for j = 1:numel(selectionT)
             tAU{j} = TaBle.tAU{selectionT{j}(1),selectionT{j}(2)};
@@ -1308,12 +1285,14 @@ for i = 1:6
         P{end + 1} = plot(datetime(ones(2,1)*[2020 1 1]),[3.125 200],'color',[0.1 0.4 0.5],'LineStyle','-.','LineWidth',0.75);
         if i == 2
             for j = 1:numel(selectionT)
-                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "}$");
+                leGend{j} = char("$\textbf{" + pOPs{selectionT{j}(1),selectionT{j}(2)}{1} + "\hspace{1.0cm}}$");
             end
-            P{end + 1} = legend(leGend,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
+            P{end + 1} = legend(leGend,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
+            P{end}.Layout.Tile = 'south';
         end
     end
 end
+exportgraphics(gcf,char(pATh + "Results/Figure_3.pdf"),'Resolution',900);
 exportgraphics(gcf,char(pATh + "Results/Figure_3.png"),'Resolution',RESolUTioN);
 for i = 1:numel(P)
     delete(P{i})
@@ -1334,9 +1313,9 @@ for i = 1:3
     ax{i}.FontSize              = 10*z;
     ax{i}.XAxis.TickLabelFormat = '%.1f';
     ax{i}.YAxis.TickLabelFormat = '%.2f';
-    xlabel('$\textbf{Post-stratified weights}$','Interpreter','latex','FontSize',11*z);
+    xlabel('$\textbf{Poststratified Weights}$','Interpreter','latex','FontSize',11*z);
     if isequal(i,1)
-        ylabel('$\textbf{Probability density function}$','Interpreter','latex','FontSize',11*z);
+        ylabel('$\textbf{Probability Density Function}$','Interpreter','latex','FontSize',11*z);
     end
     xlim([0 15])    
     grid on;
@@ -1346,14 +1325,14 @@ for i = 1:3
     y      = wEIGhTS{i};
     x      = min(y):.25:max(y);
     histogram(y,x,'Normalization','pdf','FaceColor',coloR{i},'EdgeColor',[0 0 0],'FaceAlpha',0.25,'EdgeAlpha',0.45);
-    title(char("$\textbf{" + string(char(96 + i)) + ". " + string(LAB{i}) + ", N = " + string(numel(y)) + "}$"),'Interpreter','latex','FontSize',12*z);
+    title(char("$\textbf{" + string(char(96 + i)) + ". " + string(LAB{i}) + ", N = " + string(CoMMaS(numel(y),'%0.0f')) + "}$"),'Interpreter','latex','FontSize',12*z);
     f      = ksdensity(y,x,'Function','pdf','Bandwidth',.1);
     plot(x,f,'LineWidth',0.75,'Color',[coloR{i} 0.75]);
     clear x y f
 
     T                           = ax{i}.XAxis.TickLabels;
     for j = 1:numel(T)
-        T{j} = char("$\mathbf{" + T{j} + "}$");
+        T{j} = char("$\mathrm{" + T{j} + "}$");
     end
     ax{i}.XAxis.TickLabels           = T;
     ax{i}.XAxis.TickLabelInterpreter = 'latex';
@@ -1361,7 +1340,7 @@ for i = 1:3
 
     T                           = ax{i}.YAxis.TickLabels;
     for j = 1:numel(T)
-        T{j} = char("$\mathbf{" + T{j} + "}$");
+        T{j} = char("$\mathrm{" + T{j} + "}$");
     end
     ax{i}.YAxis.TickLabels           = T;
     ax{i}.YAxis.TickLabelInterpreter = 'latex';
@@ -1372,7 +1351,7 @@ exportgraphics(gcf,char(pATh + "Results/Figure_A2.png"),'Resolution',RESolUTioN)
 
 
 tAU                      = (2006:.25:2018)';
-LAB                      = {'Infant mortality rate $\mathbf{\it{q}}\mathbf{(12}\mathbf{\it{m}}\mathbf{)}$','Under-five mortality rate $\mathbf{\it{q}}\mathbf{(60}\mathbf{\it{m}}\mathbf{)}$'};
+LAB                      = {'Infant mortality rate $\textbf{\textit{q}}\textbf{(12}\textbf{\textit{m}}\textbf{)}$','Under-five mortality rate $\textbf{\textit{q}}\textbf{(60}\textbf{\textit{m}}\textbf{)}$'};
 coloR                    = {[0.00 0.00 0.75],[0.95 0.00 0.95],[0.85 0.35 0.01],[0.45 0.65 0.20],[0.65 0.10 0.20],[0.00 0.55 0.65],[0.05 0.05 0.05]};
 z                        = min(sqrt(mPIX/((10*2)*(10*2)/pix^2)),1);
 fi                       = figure('Color',[1 1 1],'Position',z*10*[0 0 2 2]/pix,'Theme','light');
@@ -1401,18 +1380,18 @@ for i = 1:4
         ax{i}.YTick                 = 0:20:200;
         ax{i}.YAxis.MinorTickValues = 0:20:200;
         ylim([0 120])
-        ylabel('$\textbf{Deaths per 1000 births}$','Interpreter','latex','FontSize',11*z);
+        ylabel('$\textbf{Deaths per 1,000 Births}$','Interpreter','latex','FontSize',11*z);
     else
         ax{i}.YScale                = 'log';
         ax{i}.YTick                 = .1./(2.^(9:-1:-2))*1000;
         ax{i}.YAxis.MinorTickValues = 10:10:100;
         ylim([25 150])
-        ylabel('$\textbf{Deaths per 1000 births (log scale)}$','Interpreter','latex','FontSize',11*z);
+        ylabel('$\textbf{Deaths per 1,000 Births (log scale)}$','Interpreter','latex','FontSize',11*z);
     end
 
     t                           = ax{i}.XAxis.TickValues;
     for j = 1:numel(t)
-        T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+        T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
     end
     ax{i}.XTickLabelRotation         = 0;
     ax{i}.XAxis.TickLabels           = T;
@@ -1421,7 +1400,7 @@ for i = 1:4
 
     t                           = ax{i}.YAxis.TickValues;
     for j = 1:numel(t)
-        T{j} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
+        T{j} = char("$\mathrm{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
     end
     ax{i}.YTickLabelRotation         = 0;
     ax{i}.YAxis.TickLabels           = T;
@@ -1442,7 +1421,7 @@ for i = 1:4
             plot(prctile(BraSs_r{j,1}{3}(:,2:end)',50)',prctile(BraSs_r{j,1}{h}(:,2:end)',50)'*1000,'color',coloR{j},'LineWidth',1.00*z);
         end
         for j = 1:numel(CD)
-            plot(BraSs_r{j,1}{3}(:,2:50),BraSs_r{j,1}{h}(:,2:50)*1000,'color',[coloR{j} 0.1],'LineWidth',0.75*z);
+            plot(BraSs_r{j,1}{3}(:,2:min(50,R)),BraSs_r{j,1}{h}(:,2:min(50,R))*1000,'color',[coloR{j} 0.1],'LineWidth',0.75*z);
         end
     else
         for j = 1:numel(CD)
@@ -1454,8 +1433,11 @@ for i = 1:4
             plot(tAU,temp{j}(:,1),'color',coloR{j},'lineWidth',1.00*z,'LineStyle',':');
         end
     end
-    if h == 1
-        legend(CD,'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',3,'Box','off');
+    if h == 2
+        for j = 1:numel(CD)
+            CDl{j} = char("$\textbf{" + string(CD{j}) + "\hspace{0.25cm}}$");
+        end
+        legend(CDl,'Interpreter','latex','IconColumnWidth',20,'FontSize',9*z,'Location','southoutside','NumColumns',4,'Box','off');
     end
 end
 exportgraphics(gcf,char(pATh + "Results/Figure_A3.png"),'Resolution',RESolUTioN);
@@ -1489,8 +1471,8 @@ for i = 1:2
     ax{i}.YTick                 = 0:0.10:1;
     ax{i}.YAxis.MinorTickValues = 0:0.05:1;
 
-    xlabel('$\textbf{Duration (in minutes)}$','Interpreter','latex','FontSize',11*z);
-    ylabel('$\textbf{Probability density function}$','Interpreter','latex','FontSize',11*z);
+    xlabel('$\textbf{Duration (minutes)}$','Interpreter','latex','FontSize',11*z);
+    ylabel('$\textbf{Probability Density Function}$','Interpreter','latex','FontSize',11*z);
     grid on;
     grid minor;
     box on;
@@ -1512,7 +1494,7 @@ for i = 1:2
 
     t                           = ax{i}.XAxis.TickValues;
     for j = 1:numel(t)
-        T{j} = char("$\mathbf{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
+        T{j} = char("$\mathrm{" + string(sprintf(ax{i}.XAxis.TickLabelFormat,t(j))) + "}$");
     end
     ax{i}.XAxis.TickLabels           = T;
     ax{i}.XAxis.TickLabelInterpreter = 'latex';
@@ -1520,7 +1502,7 @@ for i = 1:2
 
     t                           = ax{i}.YAxis.TickValues;
     for j = 1:numel(t)
-        T{j} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
+        T{j} = char("$\mathrm{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
     end
     ax{i}.YAxis.TickLabels           = T;
     ax{i}.YAxis.TickLabelInterpreter = 'latex';
@@ -1585,12 +1567,12 @@ round(prctile(mobile{1}(2:end),[50 2.5 97.5]),2)
 round(prctile(mobile{2}(2:end),[50 2.5 97.5]),2)
 
 list         = {'$\textrm{SBH}$','$\textrm{TPH}$','$\textrm{FPH}$'};
-models       = {'$\textit{post-strat.}$','$\textit{selected}$'};
+models       = {'$\textit{poststrat.}$','$\textit{selected}$'};
 s            = RaMMPS.sample == 'SBH' | RaMMPS.sample == 'FPH';
 dATa         = [{{s,dATa{1}{2}},{s,dATa{2}{2}}} dATa];
-listDHS      = {'$\textrm{DHS VII, women 18-49}$'};
-listMICS     = {'$\textrm{MICS 6, women 18-49}$'};
-modelsDHS    = {'$\textit{all}$','$\textit{m.\,owner*}$','$\textit{m.\,owner}$'};
+listDHS      = {'$\textrm{DHS VII, women 18--49}$'};
+listMICS     = {'$\textrm{MICS 6, women 18--49}$'};
+modelsDHS    = {'$\textit{all}$','$\textit{m.\,owners*}$','$\textit{m.\,owners}$'};
 modelsMICS   = modelsDHS;
 
 for i = 1:numel(list)
@@ -1639,7 +1621,7 @@ end
 
 pACk         = {{RaMMPS,dATa},{DHSmalawi,dATaDHS},{MICSmalawi,dATaMICS}};
 lABelS       = {'Place of residence','Region','Age','Education','Household size','Electricity','Drinking water','Roofing'};
-lABelSd      = {{'urban' 'rural'} {'North' 'Central' 'South'} {'18-29' '30-39' '40-49'} {'less than complete primary' 'incomplete secondary' 'complete secondary or more'} {'1-4' '5-8' '9+'} {'access' 'no access'} {'safe source' 'other source'} {'durable material' 'other material'}}; 
+lABelSd      = {{'urban' 'rural'} {'North' 'Central' 'South'} {'18--29' '30--39' '40--49'} {'less than complete primary' 'incomplete secondary' 'complete secondary or more'} {'1--4' '5--8' '9+'} {'access' 'no access'} {'safe source' 'other source'} {'durable material' 'other material'}}; 
 outcomes     = {[1 2],[1 2 3],[1 2 3],[1 2 3],[1 2 3],[2 1],[2 1],[2 1]};
 
 H            = 0;
@@ -1735,7 +1717,7 @@ for i = 1:numel(dATa)
     ax{i}.YTick                 = 0:1:5;
     ax{i}.YAxis.MinorTickValues = 0:.5:5;
     if i == 1
-        ylabel('$\textbf{Age (in years)}$','Interpreter','latex','FontSize',11*z);
+        ylabel('$\textbf{Age (years)}$','Interpreter','latex','FontSize',11*z);
     end
     xlabel('$\textbf{Year}$','Interpreter','latex','FontSize',11*z);
     xlim([datetime(2014,1,1) datetime(2024,1,1)]);
@@ -1743,7 +1725,7 @@ for i = 1:numel(dATa)
 
     T                           = ax{i}.XAxis.TickLabels;
     for j = 1:numel(T)
-        T{j} = char("$\mathbf{" + T{j} + "}$");
+        T{j} = char("$\mathrm{" + T{j} + "}$");
     end
     ax{i}.XAxis.TickLabels           = T;
     ax{i}.XAxis.TickLabelInterpreter = 'latex';
@@ -1751,7 +1733,7 @@ for i = 1:numel(dATa)
         
     t                           = ax{i}.YAxis.TickValues;
     for j = 1:numel(t)
-        T{j} = char("$\mathbf{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
+        T{j} = char("$\mathrm{" + string(sprintf(ax{i}.YAxis.TickLabelFormat,t(j))) + "}$");
     end
     ax{i}.YAxis.TickLabels           = T;
     ax{i}.YAxis.TickLabelInterpreter = 'latex';
@@ -1760,10 +1742,10 @@ for i = 1:numel(dATa)
     temp                        = max(dATa{i}.interview);
     eXACt{i}                    = [datetime(2014,1,1) temp];
     temp                        = round(year(temp) + (day(temp,'dayofyear') - 1)./days(datetime(year(temp) + 1,1,1) - datetime(year(temp),1,1)),1);
-    temp                        = char(string(list{i}) + ", " + string(sprintf('%0.1f',2014)) + "-" +string(sprintf('%0.1f',temp)));
+    temp                        = char(string(list{i}) + ", " + string(sprintf('%0.1f',2014)) + "--" +string(sprintf('%0.1f',temp)));
     pOPs{i}                     = char("RaMMPS " + string(temp));
     temp                        = char("$\textbf{" + string(char(96 + i)) + ". " + string(temp) + "}$");
-    temp2                       = char("$\textbf{" + string(mOTheRs{i}) + " mothers and " + string(bIRtHs{i}) + " births}$");
+    temp2                       = char("$\textbf{" + string(CoMMaS(mOTheRs{i},'%0.0f')) + " mothers and " + string(CoMMaS(bIRtHs{i},'%0.0f')) + " births}$");
     title({temp;temp2},'Interpreter','latex','FontSize',11*z);
     clear d temp temp2
     grid on;
@@ -1806,8 +1788,10 @@ for i = 1:numel(dATa)
     end
     plot(datetime(ones(2,1)*[2020 1 1]),[0 8],'color',[0.1 0.4 0.25],'LineStyle','--','LineWidth',0.75);
     if i == 2
-        legend(leGend(1:2),'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',2,'Box','off');
+        LG = legend(leGend(1:2),'Interpreter','latex','FontSize',9*z,'Location','southoutside','NumColumns',2,'Box','off');
+        LG.Layout.Tile = 'south';
     end
     clear B D I xi xd r
 end
+exportgraphics(gcf,char(pATh + "Results/Figure_1.pdf"),'Resolution',900);
 exportgraphics(gcf,char(pATh + "Results/Figure_1.png"),'Resolution',RESolUTioN);
