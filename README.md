@@ -1,4 +1,4 @@
-This is a code repository for the manuscript “Estimates of under-five mortality from a mobile phone survey during the COVID-19 outbreak: an observational study comparing three instruments in Malawi”, *Demography* (2026). https://doi.org/10.1215/00703370-12559628
+This is a code repository for the manuscript “Estimates of under-five mortality from a mobile phone survey during the COVID-19 outbreak: an observational study comparing three instruments in Malawi”, *Demography* (2026) 63 (2), 617–641. https://doi.org/10.1215/00703370-12559628
 
 The MATLAB file RaMMPS_U5M.m produces all figures and tables included in the manuscript, using some input data files: RaMMPS.csv, RaMMPSdst.csv, RaMMPSHH.csv, MICSmalawi.csv, DHSmalawi.csv, DHSmalawidst.csv, IGMEmalawi.csv, and RaMMPScalls.csv. These data files are not part of this repository but can be consolidated after running the Stata do-files RaMMPS_processing.do and IGME2024.do (also within this repository).
 
